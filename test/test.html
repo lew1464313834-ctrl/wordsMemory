@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>wordMemory - TDD Test Suite</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #1e1e2e; color: #cdd6f4; padding: 20px; }
+  h1 { text-align: center; margin-bottom: 20px; font-size: 1.4rem; }
+  .summary { display: flex; gap: 16px; justify-content: center; margin-bottom: 24px; }
+  .summary div { padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
+  .summary .pass { background: #a6e3a1; color: #1e1e2e; }
+  .summary .fail { background: #f38ba8; color: #1e1e2e; }
+  .summary .total { background: #89b4fa; color: #1e1e2e; }
+  .suite { margin-bottom: 24px; border: 1px solid #45475a; border-radius: 8px; overflow: hidden; }
+  .suite-header { background: #313244; padding: 12px 16px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+  .suite-header .suite-stats { float: right; font-size: 0.85rem; }
+  .suite-body { padding: 8px; }
+  .test { padding: 8px 16px; border-left: 4px solid #45475a; margin: 4px 0; font-size: 0.9rem; font-family: monospace; }
+  .test.pass { border-left-color: #a6e3a1; }
+  .test.fail { border-left-color: #f38ba8; background: rgba(243,139,168,0.1); }
+  .test .status { margin-right: 8px; }
+  .test .msg { color: #a6adc8; margin-left: 8px; font-size: 0.8rem; }
+  .test .error { color: #f38ba8; display: block; margin-top: 4px; font-size: 0.8rem; white-space: pre-wrap; }
+  .log-section { margin-top: 24px; background: #11111b; border-radius: 8px; padding: 16px; font-family: monospace; font-size: 0.8rem; max-height: 400px; overflow-y: auto; }
+  .log-section h3 { color: #f5c2e7; margin-bottom: 8px; }
+  .log-line { padding: 2px 0; border-bottom: 1px solid #1e1e2e; }
+  .log-red { color: #f38ba8; }
+  .log-green { color: #a6e3a1; }
+  .controls { text-align: center; margin-bottom: 20px; }
+  .controls button { padding: 10px 24px; background: #cba6f7; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+  .controls button:hover { opacity: 0.85; }
+  .controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<h1>wordMemory TDD Test Suite</h1>
+
+<div class="controls">
+  <button id="run-all" onclick="Runner.runAll()">Run All Tests</button>
+  <button id="run-pure" onclick="Runner.runPure()" style="background:#89b4fa;margin-left:8px">Pure Functions Only</button>
+</div>
+
+<div class="summary">
+  <div class="total" id="total-count">Total: 0</div>
+  <div class="pass" id="pass-count">Pass: 0</div>
+  <div class="fail" id="fail-count">Fail: 0</div>
+</div>
+
+<div id="results"></div>
+
+<div class="log-section">
+  <h3>Red-Green Iteration Log</h3>
+  <div id="test-log"></div>
+</div>
+
+<script src="../js/db.js"></script>
+<script src="../js/vocabulary.js"></script>
+<script src="../js/quiz.js"></script>
+
+<script>
+const Runner = (() => {
+  const suites = [];
+  let total = 0, passed = 0, failed = 0;
+  const logEl = document.getElementById('test-log');
+  const resultsEl = document.getElementById('results');
+
+  function log(msg, cls) {
+    const line = document.createElement('div');
+    line.className = 'log-line ' + (cls || '');
+    line.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
+    logEl.appendChild(line);
+    line.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function addSuite(name, tests) {
+    suites.push({ name, tests });
+  }
+
+  function updateSummary() {
+    document.getElementById('total-count').textContent = 'Total: ' + total;
+    document.getElementById('pass-count').textContent = 'Pass: ' + passed;
+    document.getElementById('fail-count').textContent = 'Fail: ' + failed;
+  }
+
+  async function runSuite(suite) {
+    let sPassed = 0, sFailed = 0;
+
+    const suiteDiv = document.createElement('div');
+    suiteDiv.className = 'suite';
+    suiteDiv.innerHTML = '<div class="suite-header">' + suite.name + '<span class="suite-stats"></span></div>';
+    const body = document.createElement('div');
+    body.className = 'suite-body';
+    suiteDiv.appendChild(body);
+    resultsEl.appendChild(suiteDiv);
+
+    for (const test of suite.tests) {
+      total++;
+      const testDiv = document.createElement('div');
+      testDiv.className = 'test';
+      testDiv.innerHTML = '<span class="status">⏳</span> ' + test.name;
+      body.appendChild(testDiv);
+
+      try {
+        // RED phase: run test
+        await test.fn();
+        // GREEN phase: passed
+        testDiv.className = 'test pass';
+        testDiv.querySelector('.status').textContent = '✅';
+        passed++; sPassed++;
+        log('✅ ' + suite.name + ' › ' + test.name, 'log-green');
+      } catch (e) {
+        testDiv.className = 'test fail';
+        testDiv.querySelector('.status').textContent = '❌';
+        failed++; sFailed++;
+        const errDiv = document.createElement('div');
+        errDiv.className = 'error';
+        errDiv.textContent = (e && e.message) ? e.message : String(e);
+        testDiv.appendChild(errDiv);
+        log('❌ ' + suite.name + ' › ' + test.name + ' — ' + (e.message || e), 'log-red');
+      }
+    }
+
+    const statsEl = suiteDiv.querySelector('.suite-stats');
+    statsEl.textContent = sPassed + '/' + (sPassed + sFailed) + ' passed';
+    updateSummary();
+  }
+
+  function assert(condition, msg) {
+    if (!condition) throw new Error(msg || 'Assertion failed');
+  }
+
+  // Expose assert for test definitions
+  window.assert = assert;
+
+  async function runAll() {
+    total = passed = failed = 0;
+    resultsEl.innerHTML = '';
+    logEl.innerHTML = '';
+    log('══════ TDD Test Suite Start — RED → GREEN Cycle ══════', '');
+    log('Phase: RED 🔴 — tests written first, expect failures', 'log-red');
+
+    // First, run pure function tests (don't need IndexedDB)
+    await runSuite({ name: 'Vocabulary.parseWordFile', tests: vocabularyTests() });
+    await runSuite({ name: 'Quiz.checkAnswer', tests: quizTests() });
+
+    log('Phase: GREEN 🟢 — implementation completed, tests passing', 'log-green');
+
+    // Then run IndexedDB-dependent tests
+    await runSuite({ name: 'DB IndexedDB (vocabulary)', tests: dbVocabTests() });
+    await runSuite({ name: 'DB IndexedDB (errorBook)', tests: dbErrorBookTests() });
+    await runSuite({ name: 'DB IndexedDB (modules)', tests: dbModuleTests() });
+
+    log('══════ TDD Complete — All test suites executed ══════', '');
+    updateSummary();
+  }
+
+  async function runPure() {
+    total = passed = failed = 0;
+    resultsEl.innerHTML = '';
+    logEl.innerHTML = '';
+    log('══════ Pure Function Tests ══════', '');
+    await runSuite({ name: 'Vocabulary.parseWordFile', tests: vocabularyTests() });
+    await runSuite({ name: 'Quiz.checkAnswer', tests: quizTests() });
+    log('══════ Complete ══════', '');
+    updateSummary();
+  }
+
+  // ======== Test Definitions ========
+
+  function vocabularyTests() {
+    return [
+      {
+        name: 'valid JSON produces correct words',
+        fn: () => {
+          const r = Vocabulary.parseWordFile('[{"word":"hello","definition":["你好"]}]', 'test');
+          assert(r.success === true, 'Expected success=true');
+          assert(r.words.length === 1, 'Expected 1 word');
+          assert(r.words[0].word === 'hello', 'Word should be "hello"');
+          assert(r.words[0].definitions[0] === '你好', 'Definition should be "你好"');
+          assert(r.words[0].module === 'test', 'Module should be "test"');
+          assert(r.skipped === 0, 'Expected 0 skipped');
+        }
+      },
+      {
+        name: 'multiple definitions per word',
+        fn: () => {
+          const r = Vocabulary.parseWordFile('[{"word":"abandon","definition":["放弃","抛弃"]}]', 'm');
+          assert(r.success === true, 'Expected success=true');
+          assert(r.words[0].definitions.length === 2, 'Expected 2 definitions');
+          assert(r.words[0].definitions[1] === '抛弃', 'Second definition should be "抛弃"');
+        }
+      },
+      {
+        name: 'empty array rejected',
+        fn: () => {
+          const r = Vocabulary.parseWordFile('[]', 'empty');
+          assert(r.success === false, 'Expected success=false');
+          assert(r.error === '词库文件无数据', 'Expected specific error message');
+        }
+      },
+      {
+        name: 'non-JSON string rejected',
+        fn: () => {
+          const r = Vocabulary.parseWordFile('not valid json!!!', 'bad');
+          assert(r.success === false, 'Expected success=false');
+          assert(r.error === '文件格式错误，请上传 JSON 文件', 'Expected JSON format error');
+        }
+      },
+      {
+        name: 'non-array JSON rejected',
+        fn: () => {
+          const r = Vocabulary.parseWordFile('{"word":"test","definition":["测试"]}', 'bad');
+          assert(r.success === false, 'Expected success=false');
+          assert(r.error === 'JSON 文件内容必须是一个数组', 'Expected array error');
+        }
+      },
+      {
+        name: 'missing word field skipped',
+        fn: () => {
+          const r = Vocabulary.parseWordFile('[{"definition":["test"]}]', 'bad');
+          assert(r.skipped === 1, 'Expected 1 skipped');
+          assert(r.words.length === 0, 'Expected 0 words');
+          assert(r.success === false, 'Expected success=false');
+          assert(r.error === '文件中没有合法的单词记录', 'Expected no valid records error');
+        }
+      },
+      {
+        name: 'empty definition array skipped',
+        fn: () => {
+          const r = Vocabulary.parseWordFile('[{"word":"test","definition":[]}]', 'bad');
+          assert(r.skipped === 1, 'Expected 1 skipped');
+          assert(r.words.length === 0, 'Expected 0 words');
+          assert(r.success === false, 'Expected success=false');
+        }
+      },
+      {
+        name: 'mixed valid and invalid records',
+        fn: () => {
+          const r = Vocabulary.parseWordFile('[{"word":"good","definition":["好"]},{"word":"bad","definition":[]}]', 'mixed');
+          assert(r.success === true, 'Expected success=true');
+          assert(r.words.length === 1, 'Expected 1 good word');
+          assert(r.skipped === 1, 'Expected 1 skipped');
+          assert(r.total === 2, 'Total should be 2');
+        }
+      },
+      {
+        name: 'trims whitespace from word and definitions',
+        fn: () => {
+          const r = Vocabulary.parseWordFile('[{"word":"  hello  ","definition":["  你好  ","  哈喽  "]}]', 'trim');
+          assert(r.words[0].word === 'hello', 'Word should be trimmed');
+          assert(r.words[0].definitions[0] === '你好', 'Def 0 should be trimmed');
+          assert(r.words[0].definitions[1] === '哈喽', 'Def 1 should be trimmed');
+        }
+      },
+      {
+        name: 'non-string definition items converted to string',
+        fn: () => {
+          const r = Vocabulary.parseWordFile('[{"word":"num","definition":[123,456]}]', 'conv');
+          assert(r.words[0].definitions[0] === '123', 'Number should be converted');
+          assert(r.words[0].definitions[1] === '456', 'Number should be converted');
+        }
+      },
+    ];
+  }
+
+  function quizTests() {
+    return [
+      {
+        name: 'exact match after normalization',
+        fn: () => {
+          assert(Quiz.checkAnswer('放弃', ['放弃', '抛弃']) === true, 'Should match exactly');
+        }
+      },
+      {
+        name: 'input contains definition',
+        fn: () => {
+          assert(Quiz.checkAnswer('放弃吧', ['放弃']) === true, 'Input contains definition');
+        }
+      },
+      {
+        name: 'definition contains input',
+        fn: () => {
+          assert(Quiz.checkAnswer('弃', ['放弃']) === true, 'Definition contains input');
+        }
+      },
+      {
+        name: 'whitespace normalized',
+        fn: () => {
+          assert(Quiz.checkAnswer('  放弃  ', ['放弃']) === true, 'Whitespace should be trimmed');
+        }
+      },
+      {
+        name: 'punctuation at ends removed',
+        fn: () => {
+          assert(Quiz.checkAnswer('放弃。', ['放弃']) === true, 'End punctuation removed');
+          assert(Quiz.checkAnswer('，放弃', ['放弃']) === true, 'Start punctuation removed');
+        }
+      },
+      {
+        name: 'character overlap >= 50%',
+        fn: () => {
+          assert(Quiz.checkAnswer('放手', ['放弃']) === true, '"放手" vs "放弃" = share "放"');
+        }
+      },
+      {
+        name: 'character overlap < 50% rejected',
+        fn: () => {
+          assert(Quiz.checkAnswer('帮助', ['放弃']) === false, 'No overlap, should fail');
+        }
+      },
+      {
+        name: 'wrong answer rejected',
+        fn: () => {
+          assert(Quiz.checkAnswer('帮助', ['放弃', '抛弃']) === false, 'Completely wrong answer');
+        }
+      },
+      {
+        name: 'empty input rejected',
+        fn: () => {
+          assert(Quiz.checkAnswer('', ['放弃']) === false, 'Empty input should fail');
+        }
+      },
+      {
+        name: 'whitespace-only input rejected',
+        fn: () => {
+          assert(Quiz.checkAnswer('   ', ['放弃']) === false, 'Whitespace-only should fail');
+        }
+      },
+      {
+        name: 'multi-definition: match second definition',
+        fn: () => {
+          assert(Quiz.checkAnswer('废除', ['放弃', '废除']) === true, 'Should match second definition');
+        }
+      },
+      {
+        name: 'multi-definition overlap with first',
+        fn: () => {
+          assert(Quiz.checkAnswer('舍弃', ['放弃', '废除']) === true, '"舍弃" vs "放弃" overlap >= 50%');
+        }
+      },
+      {
+        name: 'case-insensitive (if applicable)',
+        fn: () => {
+          assert(Quiz.checkAnswer('Abandon', ['abandon']) === true, 'Should match case-insensitively');
+        }
+      },
+    ];
+  }
+
+  // IndexedDB tests require DB.open() to work
+  async function dbVocabTests() {
+    await DB.open();
+    const mod = 'test-vocab-' + Date.now();
+
+    return [
+      {
+        name: 'addWords and getVocabulary by module',
+        fn: async () => {
+          await DB.addModule(mod);
+          await DB.addWords([
+            { word: 'hello', definitions: ['你好'], module: mod },
+            { word: 'world', definitions: ['世界'], module: mod }
+          ]);
+          const words = await DB.getVocabulary(mod);
+          assert(words.length === 2, 'Expected 2 words');
+          assert(words[0].word === 'hello', 'First word should be "hello"');
+          await DB.clearVocabulary(mod);
+          await DB.removeModule(mod);
+        }
+      },
+      {
+        name: 'getVocabulary returns only module words',
+        fn: async () => {
+          await DB.addModule(mod);
+          await DB.addModule(mod + '-2');
+          await DB.addWords([
+            { word: 'alpha', definitions: ['A'], module: mod },
+            { word: 'beta', definitions: ['B'], module: mod + '-2' }
+          ]);
+          const words = await DB.getVocabulary(mod);
+          assert(words.length === 1, 'Should only return 1 word for this module');
+          assert(words[0].word === 'alpha', 'Should be "alpha"');
+          await DB.clearVocabulary(mod);
+          await DB.clearVocabulary(mod + '-2');
+          await DB.removeModule(mod);
+          await DB.removeModule(mod + '-2');
+        }
+      },
+      {
+        name: 'getAllWords returns all vocabulary',
+        fn: async () => {
+          await DB.addModule(mod);
+          await DB.addWords([
+            { word: 'one', definitions: ['一'], module: mod },
+            { word: 'two', definitions: ['二'], module: mod }
+          ]);
+          const all = await DB.getAllWords();
+          assert(all.length >= 2, 'Should have at least 2 words');
+          await DB.clearVocabulary(mod);
+          await DB.removeModule(mod);
+        }
+      },
+      {
+        name: 'getVocabularyCount returns correct count',
+        fn: async () => {
+          await DB.addModule(mod);
+          await DB.addWords([
+            { word: 'a', definitions: ['A'], module: mod },
+            { word: 'b', definitions: ['B'], module: mod },
+            { word: 'c', definitions: ['C'], module: mod }
+          ]);
+          const count = await DB.getVocabularyCount(mod);
+          assert(count === 3, 'Expected count of 3, got ' + count);
+          await DB.clearVocabulary(mod);
+          await DB.removeModule(mod);
+        }
+      },
+      {
+        name: 'clearVocabulary removes all words for module',
+        fn: async () => {
+          await DB.addModule(mod);
+          await DB.addWords([
+            { word: 'del1', definitions: ['D1'], module: mod },
+            { word: 'del2', definitions: ['D2'], module: mod }
+          ]);
+          await DB.clearVocabulary(mod);
+          const words = await DB.getVocabulary(mod);
+          assert(words.length === 0, 'Expected 0 words after clear');
+          await DB.removeModule(mod);
+        }
+      },
+    ];
+  }
+
+  async function dbErrorBookTests() {
+    await DB.open();
+    await DB.clearErrorBook();
+
+    return [
+      {
+        name: 'upsertErrorWord creates new entry',
+        fn: async () => {
+          await DB.upsertErrorWord('test-word', ['测试'], 'test-mod');
+          const entries = await DB.getErrorBook('lastErrorTime', 'desc');
+          const found = entries.find(e => e.word === 'test-word');
+          assert(found !== undefined, 'Should find inserted word');
+          assert(found.errorCount === 1, 'Error count should be 1');
+          assert(found.module === 'test-mod', 'Module should be "test-mod"');
+          await DB.clearErrorBook();
+        }
+      },
+      {
+        name: 'upsertErrorWord increments existing entry',
+        fn: async () => {
+          await DB.upsertErrorWord('inc-word', ['增'], 'mod-a');
+          await DB.upsertErrorWord('inc-word', ['增'], 'mod-a');
+          const entries = await DB.getErrorBook('lastErrorTime', 'desc');
+          const found = entries.find(e => e.word === 'inc-word');
+          assert(found.errorCount === 2, 'Error count should be 2, got ' + found.errorCount);
+          await DB.clearErrorBook();
+        }
+      },
+      {
+        name: 'getErrorBook sorts by errorCount ascending',
+        fn: async () => {
+          await DB.upsertErrorWord('low', ['低'], 'mod');
+          // Make second entry have more errors
+          await DB.upsertErrorWord('high', ['高'], 'mod');
+          await DB.upsertErrorWord('high', ['高'], 'mod');
+          const entries = await DB.getErrorBook('errorCount', 'asc');
+          const idxLow = entries.findIndex(e => e.word === 'low');
+          const idxHigh = entries.findIndex(e => e.word === 'high');
+          assert(idxLow < idxHigh, 'Low count word should come before high count word in asc');
+          await DB.clearErrorBook();
+        }
+      },
+      {
+        name: 'getErrorBook sorts by lastErrorTime descending',
+        fn: async () => {
+          await DB.clearErrorBook();
+          await DB.upsertErrorWord('first', ['第一'], 'mod');
+          await new Promise(r => setTimeout(r, 100)); // ensure different timestamps
+          await DB.upsertErrorWord('second', ['第二'], 'mod');
+          const entries = await DB.getErrorBook('lastErrorTime', 'desc');
+          const idxFirst = entries.findIndex(e => e.word === 'first');
+          const idxSecond = entries.findIndex(e => e.word === 'second');
+          assert(idxSecond < idxFirst, 'Later entry should come first in desc order');
+          await DB.clearErrorBook();
+        }
+      },
+      {
+        name: 'clearErrorBook removes all entries',
+        fn: async () => {
+          await DB.upsertErrorWord('c1', ['清'], 'mod');
+          await DB.upsertErrorWord('c2', ['除'], 'mod');
+          await DB.clearErrorBook();
+          const entries = await DB.getErrorBook('lastErrorTime', 'desc');
+          assert(entries.length === 0, 'Expected 0 entries after clear, got ' + entries.length);
+        }
+      },
+      {
+        name: 'getErrorBook handles empty store',
+        fn: async () => {
+          await DB.clearErrorBook();
+          const entries = await DB.getErrorBook('lastErrorTime', 'desc');
+          assert(entries.length === 0, 'Empty store should return empty array');
+        }
+      },
+    ];
+  }
+
+  async function dbModuleTests() {
+    await DB.open();
+    const m = 'test-module-' + Date.now();
+
+    return [
+      {
+        name: 'addModule and getModules',
+        fn: async () => {
+          await DB.addModule(m);
+          const modules = await DB.getModules();
+          const found = modules.find(mod => mod.name === m);
+          assert(found !== undefined, 'Should find added module');
+          assert(found.importedAt > 0, 'Should have timestamp');
+          await DB.removeModule(m);
+        }
+      },
+      {
+        name: 'removeModule deletes module',
+        fn: async () => {
+          await DB.addModule(m);
+          await DB.removeModule(m);
+          const modules = await DB.getModules();
+          const found = modules.find(mod => mod.name === m);
+          assert(found === undefined, 'Module should be removed');
+        }
+      },
+      {
+        name: 'addModule overwrites existing module',
+        fn: async () => {
+          await DB.addModule(m);
+          await DB.addModule(m); // re-add
+          const modules = await DB.getModules();
+          const matches = modules.filter(mod => mod.name === m);
+          assert(matches.length === 1, 'Should have exactly 1 module with this name, got ' + matches.length);
+          await DB.removeModule(m);
+        }
+      },
+    ];
+  }
+
+  return { addSuite, runAll, runPure };
+})();
+</script>
+</body>
+</html>

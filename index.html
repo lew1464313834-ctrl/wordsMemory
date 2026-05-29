@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>wordMemory - 单词记忆</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1 class="header__title">wordMemory</h1>
+    </header>
+    <nav class="tabs">
+      <button class="tab tab--active" data-tab="memory">单词记忆</button>
+      <button class="tab" data-tab="quiz">单词抽查</button>
+      <button class="tab" data-tab="errorbook">生词本</button>
+    </nav>
+    <main class="main">
+      <section class="tab-content" id="tab-memory">
+        <div class="card">
+  <h2>单词记忆</h2>
+  <div class="btn-group" style="margin:12px 0">
+    <label>词库：</label>
+    <select id="memory-module" class="select"></select>
+  </div>
+  <div class="btn-group" style="margin:12px 0">
+    <label>数量：</label>
+    <button class="btn memory-count" data-count="10">10</button>
+    <button class="btn memory-count" data-count="20">20</button>
+    <button class="btn memory-count" data-count="50">50</button>
+    <input type="number" id="memory-count-custom" class="input" style="width:80px" placeholder="自定义" min="1">
+  </div>
+  <button class="btn btn--primary" id="memory-start">开始记忆</button>
+  <div id="memory-play-area" style="display:none">
+    <div class="progress"><span id="memory-progress"></span></div>
+    <div style="text-align:center; margin:24px 0">
+      <div style="font-size:2rem; font-weight:bold" id="memory-word"></div>
+    </div>
+    <div class="btn-group" style="justify-content:center" id="memory-regular-btns">
+      <button class="btn" id="memory-prev" disabled>上一个</button>
+      <button class="btn btn--success" id="memory-know">会</button>
+      <button class="btn btn--danger" id="memory-dunno">不会</button>
+      <button class="btn btn--primary" id="memory-next" style="display:none">下一个</button>
+    </div>
+    <div id="memory-quiz-area" style="display:none">
+      <input type="text" class="input" id="memory-quiz-input" placeholder="输入释义..." autocomplete="off">
+      <div class="btn-group" style="margin-top:12px; justify-content:center">
+        <button class="btn btn--primary" id="memory-quiz-submit">确定</button>
+        <button class="btn btn--danger" id="memory-quiz-forgot">忘了</button>
+      </div>
+      <div id="memory-quiz-feedback"></div>
+    </div>
+    <div id="memory-definition" style="display:none; text-align:center; margin-top:12px; color: var(--color-text-light);"></div>
+  </div>
+  <div id="memory-result" style="display:none; text-align:center"></div>
+</div>
+      </section>
+      <section class="tab-content tab-content--hidden" id="tab-quiz">
+<div class="card">
+  <h2>单词抽查</h2>
+  <div class="slider-wrap" style="margin:12px 0">
+    <label>抽查数量：</label>
+    <input type="range" id="quiz-count-slider" class="slider" min="0" max="10" value="5">
+    <span class="slider-value" id="quiz-count-display">5</span>
+    <span style="font-size:0.8rem;color:var(--color-text-light)">(共 <span id="quiz-total-words">0</span> 词)</span>
+  </div>
+  <button class="btn btn--primary" id="quiz-start">开始抽查</button>
+  <div id="quiz-play-area" style="display:none">
+    <div class="progress"><span id="quiz-progress"></span></div>
+    <div style="text-align:center; margin:24px 0">
+      <div style="font-size:2rem; font-weight:bold" id="quiz-word"></div>
+    </div>
+    <div>
+      <input type="text" class="input" id="quiz-input" placeholder="输入释义..." autocomplete="off">
+    </div>
+    <div class="btn-group" style="margin-top:12px; justify-content:center">
+      <button class="btn btn--primary" id="quiz-submit">确定</button>
+      <button class="btn btn--danger" id="quiz-forgot">忘了</button>
+    </div>
+    <div id="quiz-feedback"></div>
+  </div>
+  <div id="quiz-result" style="display:none; text-align:center"></div>
+</div>
+      </section>
+      <section class="tab-content tab-content--hidden" id="tab-errorbook">
+        <div class="card">
+  <h2>生词本</h2>
+  <div class="btn-group" style="margin:12px 0">
+    <button class="btn btn--danger" id="errorbook-clear">清空生词本</button>
+    <button class="btn btn--primary" id="errorbook-export" disabled>导出PDF</button>
+  </div>
+  <div class="table-wrap">
+    <table class="table" id="errorbook-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>单词</th>
+          <th>释义</th>
+          <th>来源模块</th>
+          <th data-sort="errorCount">错误次数 <span class="table__sort-icon"></span></th>
+          <th data-sort="lastErrorTime">最后错误时间 <span class="table__sort-icon">▼</span></th>
+        </tr>
+      </thead>
+      <tbody id="errorbook-tbody"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="errorbook-empty" style="display:none">生词本暂无数据</div>
+</div>
+      </section>
+    </main>
+    <!-- 词库上传区（全局） -->
+    <section class="upload-section" id="upload-section">
+      <label class="upload-label">
+        导入词库
+        <input type="file" id="upload-input" accept=".json" class="upload-input">
+      </label>
+      <span class="upload-status" id="upload-status"></span>
+    </section>
+    <!-- 词库列表 -->
+    <div style="text-align:center">
+      <section class="module-list" id="module-list"></section>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/vocabulary.js"></script>
+  <script src="js/memory.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/errorBook.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

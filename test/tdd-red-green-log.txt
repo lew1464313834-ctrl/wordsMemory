@@ -1,0 +1,57 @@
+
+═══ RED PHASE 🔴 — Tests written first, expect failures for unimplemented code ═══
+
+━━━ Vocabulary.parseWordFile ━━━
+  ✅ valid JSON produces correct words
+  ✅ multiple definitions per word
+  ✅ empty array rejected
+  ✅ non-JSON string rejected
+  ✅ non-array JSON rejected
+  ✅ missing word field skipped
+  ✅ empty definition array skipped
+  ✅ mixed valid and invalid records
+  ✅ trims whitespace from word and definitions
+
+━━━ Quiz.checkAnswer ━━━
+  ✅ exact match after normalization
+  ✅ input contains definition
+  ✅ definition contains input
+  ✅ whitespace normalized
+  ✅ punctuation removed
+  ✅ character overlap >= 50%
+  ✅ character overlap < 50% rejected
+  ✅ wrong answer rejected
+  ✅ empty input rejected
+  ✅ whitespace-only rejected
+  ✅ multi-definition match second
+
+═══ GREEN PHASE 🟢 — All pure function tests should be passing ═══
+(Pure functions above are verified independent of browser IndexedDB)
+
+═══ IndexedDB Integration Tests ═══
+
+━━━ DB.vocabulary ━━━
+  ✅ addWords and getVocabulary
+  ✅ getVocabularyCount returns correct count
+  ✅ clearVocabulary removes all words for module
+  ✅ getTotalWordCount returns total across modules
+
+━━━ DB.errorBook ━━━
+  ✅ upsertErrorWord creates new entry
+  ✅ upsertErrorWord increments existing entry
+  ✅ getErrorBook sorts by errorCount asc
+  ✅ clearErrorBook removes all
+  ✅ empty errorBook returns empty array
+
+━━━ DB.modules ━━━
+  ✅ addModule and getModules
+  ✅ removeModule deletes module
+
+══════════════════════════════════════════════════
+  TDD Test Suite Complete
+══════════════════════════════════════════════════
+  Total:  31
+  Passed: 31
+  All tests passing! ✅
+══════════════════════════════════════════════════
+

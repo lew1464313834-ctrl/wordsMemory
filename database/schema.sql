@@ -65,4 +65,4 @@ CREATE TABLE user_errors (
 
 -- Default admin account (password: admin123, bcrypt hashed)
 INSERT INTO users (username, email, password, role) VALUES
-('admin', 'admin@wordmemory.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+('admin', 'admin@wordmemory.local', '$2y$10$GswzmnJiFBBicZ7hI7VDyu6SKWv9rp8fYEK09wD6f6PSXawvawkcK', 'admin');

@@ -10,6 +10,14 @@
           </option>
         </select>
 
+        <div v-if="selectedModule && currentProgress" class="memory-progress-card">
+          <div class="memory-progress-text">已学 {{ currentProgress.learned }} / {{ currentProgress.total }}</div>
+          <div class="memory-progress-bar">
+            <div class="memory-progress-fill" :style="{ width: currentProgress.percent + '%' }"></div>
+          </div>
+          <div class="memory-progress-pct">{{ currentProgress.percent }}%</div>
+        </div>
+
         <div class="btn-group" style="margin-bottom:12px">
           <button class="btn memory-count" :class="{ 'btn--active': selectedCount === 10 }" @click="setCount(10)">10</button>
           <button class="btn memory-count" :class="{ 'btn--active': selectedCount === 20 }" @click="setCount(20)">20</button>
@@ -91,7 +99,17 @@ let knowTimeout = null
 const availableModules = computed(() => {
   return moduleStore.allModules
     .filter(m => m.name !== 'modules')
-    .map(m => ({ id: m.id, name: m.name }))
+    .map(m => ({ id: m.id, name: m.name, learned_count: m.learned_count, words_count: m.words_count }))
+})
+
+const currentProgress = computed(() => {
+  const m = availableModules.value.find(m => m.id == selectedModule.value)
+  if (!m || !m.words_count) return null
+  return {
+    learned: m.learned_count || 0,
+    total: m.words_count,
+    percent: Math.round((m.learned_count || 0) / m.words_count * 100)
+  }
 })
 
 const currentWord = computed(() => words.value[currentIndex.value])

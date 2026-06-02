@@ -455,6 +455,40 @@ body::after {
   background: rgba(155, 126, 216, 0.08);
 }
 
+/* === Memory Progress Card === */
+.memory-progress-card {
+  text-align: center;
+  padding: 12px 16px;
+  margin: 10px 0;
+  background: rgba(155, 126, 216, 0.06);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(155, 126, 216, 0.12);
+}
+.memory-progress-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+.memory-progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(155, 126, 216, 0.15);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.memory-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #9B7ED8, #7C5CBF);
+  transition: width 0.4s ease;
+}
+.memory-progress-pct {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
 /* === Word Phonetic === */
 .word-phonetic {
   font-family: 'Georgia', 'Times New Roman', serif;
@@ -596,6 +630,9 @@ body::after {
   .slider-wrap {
     flex-direction: column;
     gap: 8px;
+  }
+  .memory-progress-card {
+    padding: 10px 12px;
   }
   .feedback {
     font-size: 0.85rem;

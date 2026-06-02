@@ -455,6 +455,17 @@ body::after {
   background: rgba(155, 126, 216, 0.08);
 }
 
+/* === Word Phonetic === */
+.word-phonetic {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 1.1rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  text-align: center;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
 /* === Quiz Input Area === */
 #quiz-input {
   margin: 12px 0;
@@ -504,17 +515,94 @@ body::after {
 }
 
 /* === Responsive === */
-/* === Memory Quiz Area === */
-#memory-quiz-input {
-  margin: 12px 0;
-  font-size: 1rem;
+
+/* Tablet / small laptop */
+@media (max-width: 768px) {
+  .app {
+    max-width: 100%;
+    padding: 16px 16px 48px;
+  }
+  .card {
+    padding: 20px 18px;
+  }
+  .tabs {
+    gap: 4px;
+    padding: 4px;
+  }
+  .tab {
+    font-size: 0.88rem;
+    padding: 10px 4px;
+  }
+  .header__title {
+    font-size: 1.7rem;
+  }
+  #memory-word, #quiz-word {
+    font-size: 1.8rem !important;
+  }
+  .btn {
+    padding: 10px 16px;
+  }
+  .btn-group {
+    gap: 8px;
+  }
 }
 
+/* Phone */
 @media (max-width: 480px) {
-  .app { padding: 16px 14px 60px; }
-  .card { padding: 20px 16px; }
-  .header__title { font-size: 1.6rem; }
-  #memory-word, #quiz-word { font-size: 1.7rem !important; }
-  .tab { font-size: 0.85rem; padding: 10px 6px; }
-  .table th, .table td { padding: 8px 10px; font-size: 0.82rem; }
+  .app {
+    padding: 12px 10px 60px;
+  }
+  .card {
+    padding: 16px 12px;
+    margin-bottom: 14px;
+    border-radius: var(--radius);
+  }
+  .header__title {
+    font-size: 1.4rem;
+  }
+  .tabs {
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius);
+  }
+  .tab {
+    font-size: 0.78rem;
+    padding: 9px 2px;
+  }
+  #memory-word, #quiz-word {
+    font-size: 1.5rem !important;
+  }
+  .word-phonetic {
+    font-size: 0.95rem;
+  }
+  .btn-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .btn-group .btn {
+    width: 100%;
+  }
+  .select, .input {
+    font-size: 16px; /* prevent iOS zoom */
+  }
+  .table th, .table td {
+    padding: 8px 8px;
+    font-size: 0.8rem;
+  }
+  .progress {
+    font-size: 0.8rem;
+    padding: 4px 12px;
+  }
+  .slider-wrap {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .feedback {
+    font-size: 0.85rem;
+    padding: 10px 14px;
+  }
+  /* Hide decorative blobs on mobile to save rendering */
+  body::before, body::after {
+    display: none;
+  }
 }

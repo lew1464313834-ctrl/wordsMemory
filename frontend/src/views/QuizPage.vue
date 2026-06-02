@@ -97,7 +97,12 @@ function checkAnswer(input, definitions) {
 
 async function fetchTotal() {
   await moduleStore.fetchUser()
+  await moduleStore.fetchAll()
   totalWords.value = moduleStore.userModules.reduce((sum, um) => sum + (um.module?.words?.length || 0), 0)
+  // Fallback: if no imported modules, estimate from all available modules
+  if (totalWords.value === 0 && moduleStore.allModules.length > 0) {
+    totalWords.value = moduleStore.allModules.length * 500
+  }
   if (count.value > totalWords.value && totalWords.value > 0) {
     count.value = Math.min(5, totalWords.value)
   }
@@ -108,7 +113,11 @@ async function start() {
 
   const errorWords = await getErrors({ sort: 'error_count', order: 'desc' })
   const allWords = []
-  for (const um of moduleStore.userModules) {
+  // Use imported modules if available, otherwise fallback to all modules
+  const sourceModules = moduleStore.userModules.length > 0
+    ? moduleStore.userModules
+    : moduleStore.allModules.filter(m => m.name !== 'modules').map(m => ({ module_id: m.id }))
+  for (const um of sourceModules) {
     const res = await getWords({ module_id: um.module_id, count: 9999 })
     allWords.push(...res.data)
   }

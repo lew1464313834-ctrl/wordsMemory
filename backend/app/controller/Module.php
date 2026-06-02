@@ -9,7 +9,19 @@ class Module
 {
     public function index()
     {
-        $modules = ModuleModel::select();
+        $userId = Request::instance()->userId ?? 0;
+        $modules = ModuleModel::withCount('words')
+            ->select()
+            ->each(function ($m) use ($userId) {
+                $learned = \think\facade\Db::table('user_words')
+                    ->where('user_id', $userId)
+                    ->where('status', 1)
+                    ->whereIn('word_id', function ($q) use ($m) {
+                        $q->table('words')->where('module_id', $m->id)->field('id');
+                    })
+                    ->count();
+                $m->learned_count = $learned;
+            });
         return json(['code' => 0, 'data' => $modules]);
     }
 

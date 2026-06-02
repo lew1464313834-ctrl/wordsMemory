@@ -5,7 +5,9 @@
       <div style="margin-top:14px">
         <select v-model="selectedModule" class="select" id="memory-module" style="width:100%;margin-bottom:12px">
           <option value="">请选择词库</option>
-          <option v-for="m in availableModules" :key="m.id" :value="m.id">{{ m.name }}</option>
+          <option v-for="m in availableModules" :key="m.id" :value="m.id">
+            {{ m.name }}{{ m.learned_count > 0 ? ` — ${m.learned_count}/${m.words_count}` : '' }}
+          </option>
         </select>
 
         <div class="btn-group" style="margin-bottom:12px">

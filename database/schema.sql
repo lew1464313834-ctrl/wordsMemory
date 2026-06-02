@@ -23,6 +23,7 @@ CREATE TABLE words (
     id INT AUTO_INCREMENT PRIMARY KEY,
     module_id INT NOT NULL,
     word VARCHAR(200) NOT NULL,
+    phonetic VARCHAR(100) NULL,
     definitions TEXT NOT NULL COMMENT 'JSON array',
     INDEX idx_module (module_id),
     FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE

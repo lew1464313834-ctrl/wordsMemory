@@ -22,6 +22,7 @@
 
     <div id="memory-play-area" v-if="active" style="display:block" class="card">
       <div id="memory-word">{{ currentWord?.word }}</div>
+      <div class="word-phonetic" v-if="currentWord?.phonetic">{{ currentWord.phonetic }}</div>
       <div class="progress" id="memory-progress">进度: {{ currentIndex + 1 }} / {{ words.length }}</div>
 
       <div id="memory-definition" v-show="showDefinition" style="display:none">

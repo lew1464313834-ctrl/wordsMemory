@@ -33,11 +33,11 @@ class Module
         return json(['code' => 0, 'msg' => '已删除']);
     }
 
-    public function addWord($moduleId)
+    public function addWord($id)
     {
         $data = Request::only(['word', 'definitions']);
         Word::create([
-            'module_id' => $moduleId,
+            'module_id' => $id,
             'word' => $data['word'],
             'definitions' => json_encode($data['definitions'], JSON_UNESCAPED_UNICODE),
         ]);
@@ -54,9 +54,9 @@ class Module
         return json(['code' => 0, 'msg' => 'ok']);
     }
 
-    public function words($moduleId)
+    public function words($id)
     {
-        $words = Word::where('module_id', $moduleId)->select();
+        $words = Word::where('module_id', $id)->select();
         return json(['code' => 0, 'data' => $words]);
     }
 

@@ -21,6 +21,7 @@ class ErrorBook
 
         $result = array_map(function ($item) {
             return [
+                'word_id' => $item['word']['id'],
                 'word' => $item['word']['word'],
                 'definitions' => json_decode($item['word']['definitions'], true),
                 'module' => $item['word']['module_id'],

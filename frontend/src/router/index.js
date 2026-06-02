@@ -39,6 +39,12 @@ const routes = [
     meta: { auth: true }
   },
   {
+    path: '/admin/login',
+    name: 'AdminLogin',
+    component: () => import('../views/admin/AdminLoginPage.vue'),
+    meta: { guest: true }
+  },
+  {
     path: '/admin',
     component: () => import('../views/admin/AdminLayout.vue'),
     meta: { admin: true },
@@ -73,8 +79,8 @@ router.beforeEach((to, from, next) => {
   const user = JSON.parse(localStorage.getItem('user') || 'null')
 
   if (to.meta.auth && !token) return next('/login')
-  if (to.meta.admin && (!token || user?.role !== 'admin')) return next('/login')
-  if (to.meta.guest && token) return next('/memory')
+  if (to.meta.admin && (!token || user?.role !== 'admin')) return next('/admin/login')
+  if (to.meta.guest && token) return next(user?.role === 'admin' ? '/admin' : '/memory')
 
   next()
 })

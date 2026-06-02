@@ -4,7 +4,7 @@
       <h2>单词记忆</h2>
       <div style="margin-top:14px">
         <select v-model="selectedModule" class="select" id="memory-module" style="width:100%;margin-bottom:12px">
-          <option value="">请先导入词库</option>
+          <option value="">请选择词库</option>
           <option v-for="m in availableModules" :key="m.id" :value="m.id">{{ m.name }}</option>
         </select>
 
@@ -17,6 +17,7 @@
 
         <button id="memory-start" class="btn btn--primary" style="width:100%" @click="start" :disabled="!selectedModule">开始记忆</button>
       </div>
+
     </div>
 
     <div id="memory-play-area" v-if="active" style="display:block" class="card">
@@ -85,10 +86,9 @@ let currentQuizWord = null
 let knowTimeout = null
 
 const availableModules = computed(() => {
-  return moduleStore.userModules.map(um => ({
-    id: um.module_id,
-    name: um.module?.name || '',
-  }))
+  return moduleStore.allModules
+    .filter(m => m.name !== 'modules')
+    .map(m => ({ id: m.id, name: m.name }))
 })
 
 const currentWord = computed(() => words.value[currentIndex.value])
@@ -143,8 +143,9 @@ async function start() {
 
   const quizCount = Math.ceil(selectedCount.value / 5)
   const errRes = await getErrors({ sort: 'error_count', order: 'desc' })
-  const shuffled = errRes.data.sort(() => Math.random() - 0.5)
+  const shuffled = (errRes.data || []).sort(() => Math.random() - 0.5)
   quizPool = shuffled.slice(0, quizCount).map(e => ({
+    id: e.word_id,
     word: e.word,
     definitions: e.definitions,
     module: e.module || '',
@@ -184,7 +185,7 @@ async function answer(isDunno) {
     dunnoCount.value++
     const w = words.value[currentIndex.value]
     await markLearned(w.id, 0)
-    addToQuizPool({ word: w.word, definitions: w.definitions, module: '' })
+    addToQuizPool({ id: w.id, word: w.word, definitions: w.definitions, module: '' })
   } else {
     dunnoPending.value = false
     const w = words.value[currentIndex.value]
@@ -247,7 +248,7 @@ async function submitQuiz() {
     quizFeedback.value = `<div class="feedback feedback--correct">正确！${currentQuizWord.word}: ${currentQuizWord.definitions.join('；')}</div>`
   } else {
     quizFeedback.value = `<div class="feedback feedback--wrong">错误！${currentQuizWord.word}: ${currentQuizWord.definitions.join('；')}</div>`
-    await markLearned(currentQuizWord.word, 0)
+    await markLearned(currentQuizWord.id, 0)
   }
   setTimeout(() => exitQuiz(), 1500)
 }
@@ -255,7 +256,7 @@ async function submitQuiz() {
 async function forgotQuiz() {
   if (!inQuiz.value) return
   quizFeedback.value = `<div class="feedback feedback--wrong">${currentQuizWord.word}: ${currentQuizWord.definitions.join('；')}</div>`
-  await markLearned(currentQuizWord.word, 0)
+  await markLearned(currentQuizWord.id, 0)
   setTimeout(() => exitQuiz(), 1500)
 }
 
@@ -304,6 +305,6 @@ function finish() {
 }
 
 onMounted(async () => {
-  await moduleStore.fetchUser()
+  await moduleStore.fetchAll()
 })
 </script>

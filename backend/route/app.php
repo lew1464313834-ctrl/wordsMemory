@@ -20,16 +20,16 @@ Route::group('/api', function () {
 
 // Admin routes (JWT + admin role required)
 Route::group('/api/admin', function () {
+    Route::get('/users/<id>/data', 'Admin.UserData/view');
     Route::get('/users', 'Admin.User/index');
     Route::put('/users/<id>', 'Admin.User/updateStatus');
     Route::delete('/users/<id>', 'Admin.User/delete');
+    Route::get('/modules/<id>/words', 'Admin.Module/words');
+    Route::post('/modules/<id>/words', 'Admin.Module/addWord');
     Route::get('/modules', 'Admin.Module/index');
     Route::post('/modules', 'Admin.Module/create');
     Route::put('/modules/<id>', 'Admin.Module/update');
     Route::delete('/modules/<id>', 'Admin.Module/delete');
-    Route::get('/modules/<id>/words', 'Admin.Module/words');
-    Route::post('/modules/<id>/words', 'Admin.Module/addWord');
     Route::put('/words/<id>', 'Admin.Module/updateWord');
     Route::delete('/words/<id>', 'Admin.Module/deleteWord');
-    Route::get('/users/<id>/data', 'Admin.UserData/view');
 })->middleware([\app\middleware\JwtAuth::class, \app\middleware\AdminAuth::class]);

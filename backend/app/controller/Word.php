@@ -44,6 +44,10 @@ class Word
         );
         shuffle($selected);
 
+        foreach ($selected as &$w) {
+            $w['definitions'] = json_decode($w['definitions'], true);
+        }
+
         return json(['code' => 0, 'data' => $selected]);
     }
 

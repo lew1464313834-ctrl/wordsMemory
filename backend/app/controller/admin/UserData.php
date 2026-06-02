@@ -7,8 +7,9 @@ use app\model\UserWord;
 
 class UserData
 {
-    public function view($userId)
+    public function view($id)
     {
+        $userId = $id;
         $modules = UserModule::where('user_id', $userId)->with('module')->select();
         $errorStats = UserError::where('user_id', $userId)->where('is_cleared', 0)->count();
         $learnedCount = UserWord::where('user_id', $userId)->where('status', 1)->count();

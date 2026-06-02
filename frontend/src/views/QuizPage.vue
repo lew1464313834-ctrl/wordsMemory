@@ -14,6 +14,7 @@
 
     <div id="quiz-play-area" v-if="active" style="display:block" class="card">
       <div id="quiz-word">{{ words[currentIndex]?.word }}</div>
+      <div class="word-phonetic" v-if="words[currentIndex]?.phonetic">{{ words[currentIndex].phonetic }}</div>
       <div class="progress" id="quiz-progress">进度: {{ currentIndex + 1 }} / {{ words.length }}</div>
       <input id="quiz-input" class="input" v-model="quizInput" placeholder="输入释义..." @keydown="onKeydown" />
       <div class="btn-group">

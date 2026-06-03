@@ -14,7 +14,14 @@ request.interceptors.request.use((config) => {
 })
 
 request.interceptors.response.use(
-  (res) => res.data,
+  (res) => {
+    // Treat API business errors (code !== 0) as rejected promises
+    // so callers can catch them uniformly via e.response.data.msg
+    if (res.data.code !== 0) {
+      return Promise.reject({ response: { data: { msg: res.data.msg || '请求失败' } } })
+    }
+    return res.data
+  },
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem('token')

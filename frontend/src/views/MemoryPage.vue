@@ -211,9 +211,9 @@ async function answer(isDunno) {
     dunnoPending.value = false
     const w = words.value[currentIndex.value]
     await markLearned(w.id, 1)
-    currentIndex.value++
     knowTimeout = setTimeout(() => {
       showDefinition.value = false
+      currentIndex.value++
       maybeQuizOrAdvance()
     }, 2000)
   }

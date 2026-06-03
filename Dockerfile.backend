@@ -1,0 +1,15 @@
+FROM php:8.3-cli-alpine
+
+RUN apk add --no-cache curl && \
+    docker-php-ext-install pdo_mysql
+
+COPY backend/ /var/www/html/
+WORKDIR /var/www/html
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
+    composer install --no-dev --no-interaction --optimize-autoloader && \
+    rm /usr/local/bin/composer
+
+EXPOSE 9000
+
+CMD ["php", "think", "run", "-p", "9000"]

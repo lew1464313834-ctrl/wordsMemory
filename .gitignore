@@ -2,4 +2,7 @@ backend/runtime/
 backend/vendor/
 frontend/node_modules/
 frontend/dist/
+.env
+backend/.env
 .DS_Store
+.claude

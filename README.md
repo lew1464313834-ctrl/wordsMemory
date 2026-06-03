@@ -64,6 +64,11 @@ cd frontend && npm run dev
 |------|--------|------|
 | 管理员 | `admin` | `admin123` |
 
+> ⚠️ **首次登录后请立即修改管理员密码！** 进入设置页面或执行：
+> ```sql
+> mysql -u root wordmemory -e "UPDATE users SET password='<bcrypt-hash>' WHERE username='admin';"
+> ```
+
 管理员可访问 `/admin` 管理后台。
 
 ## 使用指南

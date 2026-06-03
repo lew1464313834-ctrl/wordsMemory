@@ -20,12 +20,16 @@ services:
       dockerfile: Dockerfile.backend
     volumes:
       - seed_data:/var/www/html/../data
+    environment:
+      JWT_KEY: ${JWT_KEY:-change-me-in-production}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-wordmemory}
     depends_on:
       mysql:
         condition: service_healthy
     restart: unless-stopped
     command: >
-      sh -c "cp /var/www/html/.env.docker /var/www/html/.env &&
+      sh -c "cp /var/www/html/.env.docker /var/www/html/.env.tpl &&
+             envsubst < /var/www/html/.env.tpl > /var/www/html/.env &&
              php think seed:words 2>/dev/null || true &&
              php think run -p 9000"
 

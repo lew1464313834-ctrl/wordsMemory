@@ -1,4 +1,5 @@
 [
   { "file": "example.json", "name": "example" },
-  { "file": "kaoyan.json", "name": "考研高频单词" }
+  { "file": "kaoyan.json", "name": "考研高频单词" },
+  { "file": "kaoyan_5500.json", "name": "考研英语单词5500" }
 ]

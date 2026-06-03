@@ -215,7 +215,7 @@ async function answer(isDunno) {
       showDefinition.value = false
       currentIndex.value++
       maybeQuizOrAdvance()
-    }, 2000)
+    }, 1000)
   }
 }
 

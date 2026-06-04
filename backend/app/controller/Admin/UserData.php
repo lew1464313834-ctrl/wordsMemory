@@ -1,5 +1,5 @@
 <?php
-namespace app\controller\admin;
+namespace app\controller\Admin;
 
 use app\model\UserModule;
 use app\model\UserError;

@@ -18,8 +18,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    volumes:
-      - seed_data:/var/www/html/../data
     environment:
       JWT_KEY: ${JWT_KEY:-change-me-in-production}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-wordmemory}
@@ -45,11 +43,10 @@ services:
 
   cloudflared:
     image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate --protocol http2 run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - frontend
     restart: unless-stopped
 
 volumes:
   mysql_data:
-  seed_data:

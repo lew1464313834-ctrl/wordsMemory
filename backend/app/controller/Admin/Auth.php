@@ -1,5 +1,5 @@
 <?php
-namespace app\controller\admin;
+namespace app\controller\Admin;
 
 use app\model\User;
 use Firebase\JWT\JWT;
@@ -13,6 +13,8 @@ class Auth
         if (!$user || !password_verify($data['password'], $user->password)) {
             return json(['code' => 400, 'msg' => '账号或密码错误']);
         }
+        $user->last_login_at = date('Y-m-d H:i:s');
+        $user->save();
         $payload = ['uid' => $user->id, 'role' => $user->role, 'iat' => time(), 'exp' => time() + config('jwt.expire')];
         return json(['code' => 0, 'data' => [
             'token' => JWT::encode($payload, config('jwt.key'), 'HS256'),

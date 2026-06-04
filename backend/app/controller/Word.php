@@ -14,41 +14,68 @@ class Word
         $count = intval(Request::param('count', 10));
         $userId = Request::instance()->userId;
 
-        $allWords = WordModel::where('module_id', $moduleId)->select()->toArray();
-        if (empty($allWords)) {
+        $totalWords = WordModel::where('module_id', $moduleId)->count();
+        if ($totalWords === 0) {
             return json(['code' => 0, 'data' => []]);
         }
 
+        // Fetch module name once
+        $module = \app\model\Module::where('id', $moduleId)->find();
+        $moduleName = $module ? $module->name : '';
+
+        // Get mastered word IDs
         $masteredIds = UserWord::where('user_id', $userId)
             ->where('status', 1)->column('word_id');
 
-        $unlearned = [];
+        $unlearnedCount = intval($count * 0.8);
+        $learnedCount = $count - $unlearnedCount;
+
+        // Fetch unlearned words (random order, limited)
+        $unlearned = WordModel::where('module_id', $moduleId)
+            ->whereNotIn('id', $masteredIds ?: [0])
+            ->orderRaw('RAND()')
+            ->limit(min($unlearnedCount * 2, 500))
+            ->select()->toArray();
+
+        // Fetch learned words (random order, limited)
         $learned = [];
-        foreach ($allWords as $w) {
-            if (in_array($w['id'], $masteredIds)) {
-                $learned[] = $w;
-            } else {
-                $unlearned[] = $w;
+        if ($learnedCount > 0 && $masteredIds) {
+            $learned = WordModel::where('module_id', $moduleId)
+                ->whereIn('id', $masteredIds)
+                ->orderRaw('RAND()')
+                ->limit(min($learnedCount * 2, 200))
+                ->select()->toArray();
+        }
+
+        // Build selection, ensuring we return at least $count (or all available)
+        $allUnlearned = count($unlearned);
+        $allLearned = count($learned);
+
+        $takeUnlearned = min($unlearnedCount, $allUnlearned);
+        // If not enough unlearned, fill with learned
+        if ($takeUnlearned < $unlearnedCount) {
+            $takeLearned = min($count - $takeUnlearned, $allLearned);
+        } else {
+            $takeLearned = min($learnedCount, $allLearned);
+            if ($takeLearned < $learnedCount) {
+                // Fill remaining with unlearned
+                $takeUnlearned = min($count - $takeLearned, $allUnlearned);
             }
         }
 
-        shuffle($unlearned);
-        shuffle($learned);
-        $unlearnedCount = min(count($unlearned), intval($count * 0.8));
-        $learnedCount = min(count($learned), $count - $unlearnedCount);
-        $unlearnedCount = $count - $learnedCount;
-
         $selected = array_merge(
-            array_slice($unlearned, 0, $unlearnedCount),
-            array_slice($learned, 0, $learnedCount)
+            array_slice($unlearned, 0, $takeUnlearned),
+            array_slice($learned, 0, $takeLearned)
         );
         shuffle($selected);
 
+        // Attach module name to each word
         foreach ($selected as &$w) {
             $w['definitions'] = json_decode($w['definitions'], true);
+            $w['module_name'] = $moduleName;
         }
 
-        return json(['code' => 0, 'data' => $selected]);
+        return json(['code' => 0, 'data' => $selected, 'module_name' => $moduleName]);
     }
 
     public function markLearned($id)

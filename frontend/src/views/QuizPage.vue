@@ -3,16 +3,21 @@
     <div class="card">
       <h2>单词抽查</h2>
       <div style="margin-top:14px">
+        <select v-model="selectedModule" class="select" style="width:100%;margin-bottom:12px">
+          <option value="">全部词库</option>
+          <option v-for="m in availableModules" :key="m.id" :value="m.id">{{ m.name }}</option>
+        </select>
         <div class="slider-wrap" style="margin-bottom:12px">
           <span>数量:</span>
           <input id="quiz-count-slider" class="slider" type="range" v-model.number="count" :max="totalWords" min="0" style="flex:1" />
           <span class="slider-value" id="quiz-count-display">{{ count }}</span>
         </div>
-        <button id="quiz-start" class="btn btn--primary" style="width:100%" @click="start" :disabled="count === 0">开始抽查</button>
+        <button id="quiz-start" class="btn btn--primary" style="width:100%" @click="start" :disabled="count === 0 || !selectedModule">开始抽查</button>
       </div>
     </div>
 
     <div id="quiz-play-area" v-if="active" style="display:block" class="card">
+      <div class="word-module" v-if="words[currentIndex]?.module_name" style="color:var(--color-text-secondary);font-size:0.85rem;margin-bottom:4px">📚 {{ words[currentIndex].module_name }}</div>
       <div id="quiz-word">{{ words[currentIndex]?.word }}</div>
       <div class="word-phonetic" v-if="words[currentIndex]?.phonetic">{{ words[currentIndex].phonetic }}</div>
       <div class="progress" id="quiz-progress">进度: {{ currentIndex + 1 }} / {{ words.length }}</div>
@@ -53,7 +58,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { getWords, markLearned } from '../api/words'
 import { getErrors } from '../api/errors'
 import { useModuleStore } from '../stores/modules'
@@ -61,6 +66,7 @@ import html2canvas from 'html2canvas'
 
 const moduleStore = useModuleStore()
 
+const selectedModule = ref('')
 const totalWords = ref(0)
 const count = ref(5)
 const words = ref([])
@@ -70,6 +76,12 @@ const wrongWords = ref([])
 const quizInput = ref('')
 const feedback = ref('')
 const result = ref(false)
+
+const availableModules = computed(() => {
+  return moduleStore.allModules
+    .filter(m => m.name !== 'modules')
+    .map(m => ({ id: m.id, name: m.name, learned_count: m.learned_count, words_count: m.words_count }))
+})
 
 function norm(s) {
   return s.replace(/^[，。！？、,.!?\s]+/, '').replace(/[，。！？、,.!?\s]+$/, '').trim()
@@ -98,41 +110,55 @@ function checkAnswer(input, definitions) {
 async function fetchTotal() {
   await moduleStore.fetchUser()
   await moduleStore.fetchAll()
-  totalWords.value = moduleStore.userModules.reduce((sum, um) => sum + (um.module?.words?.length || 0), 0)
-  // Fallback: if no imported modules, estimate from all available modules
-  if (totalWords.value === 0 && moduleStore.allModules.length > 0) {
-    totalWords.value = moduleStore.allModules.length * 500
+  if (!selectedModule.value && availableModules.value.length > 0) {
+    selectedModule.value = availableModules.value[0].id
+  }
+  updateTotalWords()
+}
+
+function updateTotalWords() {
+  if (selectedModule.value) {
+    const mod = availableModules.value.find(m => m.id == selectedModule.value)
+    totalWords.value = mod ? (mod.words_count || 0) : 0
+  } else {
+    totalWords.value = availableModules.value.reduce((sum, m) => sum + (m.words_count || 0), 0)
   }
   if (count.value > totalWords.value && totalWords.value > 0) {
     count.value = Math.min(5, totalWords.value)
   }
 }
 
-async function start() {
-  if (count.value === 0) return
+watch(selectedModule, updateTotalWords)
 
-  const errorWords = await getErrors({ sort: 'error_count', order: 'desc' })
-  const allWords = []
-  // Use imported modules if available, otherwise fallback to all modules
-  const sourceModules = moduleStore.userModules.length > 0
-    ? moduleStore.userModules
-    : moduleStore.allModules.filter(m => m.name !== 'modules').map(m => ({ module_id: m.id }))
-  for (const um of sourceModules) {
-    const res = await getWords({ module_id: um.module_id, count: 9999 })
-    allWords.push(...res.data)
-  }
+async function start() {
+  if (count.value === 0 || !selectedModule.value) return
+
+  const moduleId = parseInt(selectedModule.value)
+
+  // Fetch error words and module words in parallel
+  const perModuleCount = Math.min(300, count.value + 30)
+  const [errorWordsRes, moduleRes] = await Promise.all([
+    getErrors({ sort: 'error_count', order: 'desc' }),
+    getWords({ module_id: moduleId, count: perModuleCount })
+  ])
+
+  // Collect all words from the selected module
+  const allWords = (moduleRes && moduleRes.data) ? moduleRes.data : []
 
   const picked = []
   const usedWords = new Set()
 
-  for (const ew of errorWords.data) {
+  // Priority 1: Error words
+  const errorWords = errorWordsRes?.data || []
+  for (const ew of errorWords) {
     if (picked.length >= count.value) break
     if (!usedWords.has(ew.word)) {
-      picked.push({ id: ew.word_id || 0, word: ew.word, definitions: ew.definitions, module: ew.module })
+      picked.push({ id: ew.word_id || 0, word: ew.word, definitions: ew.definitions, module: ew.module, module_name: ew.module })
       usedWords.add(ew.word)
     }
   }
 
+  // Priority 2: Random module words
   const remaining = allWords.filter(w => !usedWords.has(w.word))
   const shuffled = remaining.sort(() => Math.random() - 0.5)
   for (const w of shuffled) {
@@ -141,7 +167,21 @@ async function start() {
     usedWords.add(w.word)
   }
 
-  words.value = picked.slice(0, count.value)
+  // If still not enough, re-fetch with a bigger count
+  if (picked.length < count.value) {
+    const extraCount = Math.min(500, (count.value - picked.length) * 5)
+    const extraRes = await getWords({ module_id: moduleId, count: extraCount })
+    if (extraRes && extraRes.data) {
+      for (const w of extraRes.data) {
+        if (!usedWords.has(w.word) && picked.length < count.value) {
+          picked.push(w)
+          usedWords.add(w.word)
+        }
+      }
+    }
+  }
+
+  words.value = picked
   currentIndex.value = 0
   wrongWords.value = []
   active.value = true

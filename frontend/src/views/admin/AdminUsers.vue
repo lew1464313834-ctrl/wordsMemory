@@ -16,6 +16,7 @@
             <th>角色</th>
             <th>状态</th>
             <th>注册时间</th>
+            <th>最后登录</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -33,6 +34,7 @@
               </span>
             </td>
             <td>{{ user.created_at }}</td>
+            <td>{{ user.last_login_at ? user.last_login_at.substring(0, 16) : '从未登录' }}</td>
             <td>
               <div class="btn-group">
                 <button v-if="user.id !== 1" class="btn" @click="toggleStatus(user)">

@@ -1,5 +1,5 @@
 <?php
-namespace app\controller\admin;
+namespace app\controller\Admin;
 
 use app\model\User as UserModel;
 use think\facade\Request;
@@ -10,7 +10,7 @@ class User
     {
         $keyword = Request::param('keyword', '');
         $page = intval(Request::param('page', 1));
-        $query = UserModel::field('id,username,email,role,status,created_at');
+        $query = UserModel::field('id,username,email,role,status,created_at,last_login_at');
         if ($keyword) {
             $query->where('username|email', 'like', "%{$keyword}%");
         }

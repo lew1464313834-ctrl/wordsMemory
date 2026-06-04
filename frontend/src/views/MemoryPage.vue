@@ -31,8 +31,9 @@
     </div>
 
     <div id="memory-play-area" v-if="active" style="display:block" class="card">
-      <div id="memory-word">{{ currentWord?.word }}</div>
-      <div class="word-phonetic" v-if="currentWord?.phonetic">{{ currentWord.phonetic }}</div>
+      <div class="word-module" v-if="inQuiz" style="color:var(--color-warning);font-size:0.85rem;margin-bottom:4px">📝 抽查时间！</div>
+      <div id="memory-word">{{ inQuiz ? currentQuizWord?.word : currentWord?.word }}</div>
+      <div class="word-phonetic" v-if="inQuiz ? currentQuizWord?.phonetic : currentWord?.phonetic">{{ inQuiz ? currentQuizWord.phonetic : currentWord.phonetic }}</div>
       <div class="progress" id="memory-progress">进度: {{ currentIndex + 1 }} / {{ words.length }}</div>
 
       <div id="memory-definition" v-show="showDefinition" style="display:none">
@@ -211,6 +212,10 @@ async function answer(isDunno) {
     dunnoPending.value = false
     const w = words.value[currentIndex.value]
     await markLearned(w.id, 1)
+    // Update local progress count reactively
+    const mod = moduleStore.allModules.find(m => m.id == selectedModule.value)
+    if (mod && mod.learned_count == null) mod.learned_count = 0
+    if (mod) mod.learned_count++
     knowTimeout = setTimeout(() => {
       showDefinition.value = false
       currentIndex.value++

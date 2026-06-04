@@ -38,6 +38,8 @@ class Auth
         if ($user->status === 0) {
             return json(['code' => 403, 'msg' => '账号已被禁用']);
         }
+        $user->last_login_at = date('Y-m-d H:i:s');
+        $user->save();
         $token = $this->makeToken($user);
         return json(['code' => 0, 'data' => ['token' => $token, 'user' => $this->userInfo($user)]]);
     }

@@ -18,6 +18,17 @@ class JwtAuth
             $decoded = JWT::decode($token, new Key(config('jwt.key'), 'HS256'));
             $request->userId = $decoded->uid;
             $request->userRole = $decoded->role;
+
+            // Update last_login_at if more than 1 hour since last recorded
+            try {
+                $user = \app\model\User::find($decoded->uid);
+                if ($user && (empty($user->last_login_at) || strtotime($user->last_login_at) < time() - 3600)) {
+                    $user->last_login_at = date('Y-m-d H:i:s');
+                    $user->save();
+                }
+            } catch (\Exception $e) {
+                // Silently ignore DB errors in login tracking
+            }
         } catch (\Exception $e) {
             return json(['code' => 401, 'msg' => 'Token 无效或已过期'])->code(401);
         }

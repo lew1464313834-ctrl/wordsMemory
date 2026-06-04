@@ -1,12 +1,17 @@
 FROM php:8.3-cli-alpine
 
-RUN apk add --no-cache curl && \
+# Use Aliyun Alpine mirror (required for network access in China)
+RUN sed -i 's|https://dl-cdn.alpinelinux.org|https://mirrors.aliyun.com|g' /etc/apk/repositories
+
+RUN apk add --no-cache curl gettext && \
     docker-php-ext-install pdo_mysql
 
 COPY backend/ /var/www/html/
+COPY data/ /var/www/data/
 WORKDIR /var/www/html
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
+    composer config -g repos.packagist composer https://mirrors.aliyun.com/composer/ && \
     composer install --no-dev --no-interaction --optimize-autoloader && \
     rm /usr/local/bin/composer
 

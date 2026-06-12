@@ -18,6 +18,7 @@
       >生词本</button>
       <button class="tab" @click="$router.push('/settings')">设置</button>
     </nav>
+    <AppLoading />
     <router-view />
   </div>
 </template>
@@ -26,6 +27,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
+import AppLoading from './components/AppLoading.vue'
 
 const route = useRoute()
 const auth = useAuthStore()

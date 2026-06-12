@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useLoadingStore } from '@/stores/loading'
 
 const routes = [
   {
@@ -75,6 +76,9 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  const loading = useLoadingStore()
+  loading.show('fullscreen')
+
   const token = localStorage.getItem('token')
   const user = JSON.parse(localStorage.getItem('user') || 'null')
 
@@ -83,6 +87,11 @@ router.beforeEach((to, from, next) => {
   if (to.meta.guest && token) return next(user?.role === 'admin' ? '/admin' : '/memory')
 
   next()
+})
+
+router.afterEach(() => {
+  const loading = useLoadingStore()
+  loading.hide()
 })
 
 export default router

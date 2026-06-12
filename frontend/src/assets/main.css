@@ -643,3 +643,62 @@ body::after {
     display: none;
   }
 }
+
+/* === Loading Overlay === */
+.loading-overlay {
+  position: fixed; inset: 0;
+  z-index: 9999;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.loading-overlay.fullscreen {
+  background: rgba(243, 239, 255, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.loading-overlay.inline {
+  position: fixed; inset: auto;
+  right: 24px; bottom: 24px;
+  z-index: 9998;
+  pointer-events: none;
+}
+
+/* === Rotating Ring === */
+.loading-ring {
+  position: relative;
+  width: 160px; height: 160px;
+  animation: rotate-ring 2.5s linear infinite;
+}
+.loading-overlay.inline .loading-ring {
+  width: 80px; height: 80px;
+}
+@keyframes rotate-ring {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.loading-ring .char {
+  position: absolute; top: 50%; left: 50%;
+  font-family: 'Varela Round', sans-serif;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.loading-overlay.fullscreen .loading-ring .char {
+  font-size: 22px;
+}
+.loading-overlay.inline .loading-ring .char {
+  font-size: 14px;
+}
+
+/* === Loading Label === */
+.loading-label {
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.05em;
+}
+
+/* === Transition === */
+.loading-fade-enter-active,
+.loading-fade-leave-active { transition: opacity 0.3s ease; }
+.loading-fade-enter-from,
+.loading-fade-leave-to { opacity: 0; }

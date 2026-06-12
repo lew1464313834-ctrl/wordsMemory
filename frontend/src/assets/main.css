@@ -667,14 +667,9 @@ body::after {
 .loading-ring {
   position: relative;
   width: 160px; height: 160px;
-  animation: rotate-ring 2.5s linear infinite;
 }
 .loading-overlay.inline .loading-ring {
   width: 80px; height: 80px;
-}
-@keyframes rotate-ring {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
 }
 .loading-ring .char {
   position: absolute; top: 50%; left: 50%;

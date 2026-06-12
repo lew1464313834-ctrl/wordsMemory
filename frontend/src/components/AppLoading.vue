@@ -18,6 +18,7 @@ let rafId = null
 let ringAngle = 0
 
 onMounted(() => {
+  ringAngle = 0
   buildRing()
   startRotation()
 })

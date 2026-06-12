@@ -6,3 +6,6 @@ frontend/dist/
 backend/.env
 .DS_Store
 .claude
+
+# Superpowers working files
+.superpowers/
